@@ -728,14 +728,20 @@ function updateABRDisplay(tier,bw,loss,rtt){
 /* ---- PATCH SDP for 4K and no bitrate cap ---- */
 function patchSDP(sdp){
   var q=QUALITY[quality];
-  /* Remove all bitrate limits injected by browser/PeerJS */
+  /* Remove all bitrate limits */
   sdp=sdp.replace(/b=AS:[0-9]+\r\n/g,'');
   sdp=sdp.replace(/b=TIAS:[0-9]+\r\n/g,'');
   sdp=sdp.replace(/b=CT:[0-9]+\r\n/g,'');
-  /* Inject high ceiling - ABR will regulate down dynamically */
+  /* Inject bitrate AFTER m=video line (and after c= if present) - SDP spec */
   var bAS=Math.round(q.maxBps/1000);
   var bTIAS=Math.round(q.maxBps);
-  sdp=sdp.replace('m=video','b=AS:'+bAS+'\r\nb=TIAS:'+bTIAS+'\r\nm=video');
+  /* Pattern: m=video ... \r\n then optional c= ... \r\n then inject b= */
+  sdp=sdp.replace(
+    /(m=video[^\r\n]*\r\n)(c=[^\r\n]*\r\n)?/g,
+    function(match, mLine, cLine){
+      return mLine + (cLine||'') + 'b=AS:'+bAS+'\r\nb=TIAS:'+bTIAS+'\r\n';
+    }
+  );
   /* Force audio to use Opus with high quality params */
   sdp=sdp.replace(/a=rtpmap:(\d+) opus\/48000\/2/g,function(m,pt){
     return m;
