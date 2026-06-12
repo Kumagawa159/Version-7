@@ -381,9 +381,32 @@ var RTC_CFG={
   iceServers:[
     {urls:'stun:stun.l.google.com:19302'},
     {urls:'stun:stun1.l.google.com:19302'},
-    {urls:'stun:stun2.l.google.com:19302'}
+    {urls:'stun:stun2.l.google.com:19302'},
+    {urls:'stun:stun3.l.google.com:19302'},
+    {urls:'stun:stun4.l.google.com:19302'},
+    /* Metered TURN - free tier, reliable relay */
+    {
+      urls:'turn:openrelay.metered.ca:80',
+      username:'openrelayproject',
+      credential:'openrelayproject'
+    },
+    {
+      urls:'turn:openrelay.metered.ca:443',
+      username:'openrelayproject',
+      credential:'openrelayproject'
+    },
+    {
+      urls:'turn:openrelay.metered.ca:443?transport=tcp',
+      username:'openrelayproject',
+      credential:'openrelayproject'
+    },
+    {
+      urls:'turns:openrelay.metered.ca:443',
+      username:'openrelayproject',
+      credential:'openrelayproject'
+    }
   ],
-  sdpSemantics:'unified-plan',
+  iceCandidatePoolSize:10,
   bundlePolicy:'max-bundle',
   rtcpMuxPolicy:'require'
 };
@@ -819,7 +842,13 @@ function attachLocal(stream){
       var ovl=document.getElementById('lovl');
       ovl.textContent=(s.width||'?')+'x'+(s.height||'?')+' '+Math.round(s.frameRate||0)+'fps';
       ovl.style.display='block';
-    },800);
+      /* Show real captured resolution in stats */
+      document.getElementById('i-res').textContent=(s.width||'?')+'x'+(s.height||'?');
+      document.getElementById('i-fps').textContent=Math.round(s.frameRate||0)+' fps';
+      /* Log to console for debugging */
+      console.log('[PrivateShare] Captured:', s.width+'x'+s.height, '@', s.frameRate+'fps');
+      console.log('[PrivateShare] Constraints asked:', JSON.stringify(vt.getConstraints()));
+    },1000);
   }
   var ha=stream.getAudioTracks().length>0;
   document.getElementById('i-audio').textContent=ha?'Oui':'Non';
